@@ -19,9 +19,6 @@ jobs:
 
       - run: npm install -g eas-cli
 
-      - run: npx expo prebuild
-
-      - run: |
-          eas build -p android --non-interactive
+      - run: eas build -p android --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
