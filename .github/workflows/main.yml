@@ -19,6 +19,12 @@ jobs:
 
       - run: npm install -g eas-cli
 
-      - run: eas build -p android --non-interactive
+      - name: Init EAS
+        run: |
+          npx expo install expo-dev-client
+          npx expo prebuild --platform android --no-install || true
+
+      - name: Build APK
+        run: eas build -p android --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
