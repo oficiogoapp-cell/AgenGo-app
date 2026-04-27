@@ -1,0 +1,151 @@
+AgenGo/
+ ├── App.js
+ ├── app.json
+ ├── eas.json
+ ├── package.json
+ ├── /assets/logo.png
+ ├── /screens/
+ │    ├── CalendarScreen.js
+ │    ├── DayScreen.js
+ │    ├── EditScreen.js
+ │    ├── PendingScreen.js
+ ├── /components/
+ │    ├── JobCard.js
+ ├── /storage/
+ │    ├── db.js
+npx expo install @react-navigation/native
+npx expo install react-native-screens react-native-safe-area-context
+npx expo install @react-navigation/native-stack
+npx expo install @react-native-async-storage/async-storage
+npx expo install expo-notifications
+npx expo install react-native-calendars
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import CalendarScreen from './screens/CalendarScreen';
+import DayScreen from './screens/DayScreen';
+import EditScreen from './screens/EditScreen';
+import PendingScreen from './screens/PendingScreen';
+
+const Stack = createNativeStackNavigator();
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Calendario" component={CalendarScreen} />
+        <Stack.Screen name="Día" component={DayScreen} />
+        <Stack.Screen name="Editar" component={EditScreen} />
+        <Stack.Screen name="Pendientes" component={PendingScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export const getTrabajos = async () => {
+  const data = await AsyncStorage.getItem('trabajos');
+  return data ? JSON.parse(data) : [];
+};
+
+export const saveTrabajo = async (trabajo) => {
+  const data = await getTrabajos();
+  data.push(trabajo);
+  await AsyncStorage.setItem('trabajos', JSON.stringify(data));
+};
+
+export const updateTrabajo = async (updated) => {
+  let data = await getTrabajos();
+  data = data.map(t => t.id === updated.id ? updated : t);
+  await AsyncStorage.setItem('trabajos', JSON.stringify(data));
+};
+
+export const deleteTrabajo = async (id) => {
+  let data = await getTrabajos();
+  data = data.filter(t => t.id !== id);
+  await AsyncStorage.setItem('trabajos', JSON.stringify(data));
+};
+import React, { useState } from 'react';
+import { View, Button } from 'react-native';
+import { Calendar } from 'react-native-calendars';
+
+export default function CalendarScreen({ navigation }) {
+  const [selected, setSelected] = useState('');
+
+  return (
+    <View style={{ flex: 1 }}>
+      <Calendar
+        onDayPress={(day) => {
+          setSelected(day.dateString);
+          navigation.navigate('Día', { date: day.dateString });
+        }}
+        markedDates={{
+          [selected]: { selected: true, selectedColor: '#0A1F44' }
+        }}
+      />
+
+      <Button title="Pendientes" onPress={() => navigation.navigate('Pendientes')} />
+    </View>
+  );
+}
+import { View, Text } from 'react-native';
+
+export default function JobCard({ job }) {
+  return (
+    <View style={{
+      backgroundColor: '#fff',
+      padding: 15,
+      margin: 5,
+      borderRadius: 10
+    }}>
+      <Text>{job.nombre}</Text>
+      <Text>{job.direccion}</Text>
+      <Text>${job.presupuesto}</Text>
+      <Text>{job.estadoTrabajo}</Text>
+      <Text>{job.estadoPago}</Text>
+    </View>
+  );
+}
+import * as Notifications from 'expo-notifications';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true
+  })
+});
+import { Linking } from 'react-native';
+
+Linking.openURL(`tel:${telefono}`);
+Linking.openURL(`https://wa.me/${telefono}`);
+{
+  "build": {
+    "production": {
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  }
+}
+name: Build AgenGo APK
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - run: npm install
+
+      - run: npm install -g eas-cli
+
+      - run: eas build -p android --non-interactive
