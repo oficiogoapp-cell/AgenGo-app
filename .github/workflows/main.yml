@@ -1,4 +1,4 @@
-name: Build AgenGo APK
+name: Build APK (AgenGo)
 
 on:
   push:
@@ -15,10 +15,21 @@ jobs:
         with:
           node-version: 18
 
-      - run: npm install
+      - name: Install dependencies
+        run: npm install
 
-      - run: npm install -g eas-cli
+      - name: Install Expo CLI
+        run: npm install -g expo-cli
 
-      - run: npx expo prebuild
+      - name: Build APK locally
+        run: |
+          npx expo prebuild
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
 
-      - run: npx eas build -p android --non-interactive
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: AgenGo-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
